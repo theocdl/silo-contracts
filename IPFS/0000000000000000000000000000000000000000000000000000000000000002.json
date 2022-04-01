@@ -1,0 +1,10 @@
+{
+  "name": "Entrepirse 2",
+  "description": "Une unité de blé est mise à disposition.",
+  "address": "4 rue francois 1er",
+  "city": "Paris",
+  "zipcode": "75016",
+  "country": "France",
+  "contrat": "https://gateway.pinata.cloud/ipfs/QmTUtA9jNVF4bqBEX1BPNKhhN5S4EbNkyUiDrQY9JBRi1S",
+  "info": "Ce contrat peut être échangé contre une unité de blé. Une unité de blé correspond à une tonne. Il peut etre achté ou bien échanger contre un contrat similaire."
+}
