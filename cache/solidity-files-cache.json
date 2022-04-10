@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\theoc\\ATO\\Silo\\contracts\\DAI.sol": {
-      "lastModificationDate": 1649183441191,
-      "contentHash": "def687a30c5faf8286b447fa62c4c60c",
+      "lastModificationDate": 1649413003776,
+      "contentHash": "cf65d58e322e4a2cdf59e4b760c38380",
       "sourceName": "contracts/DAI.sol",
       "solcConfig": {
         "version": "0.8.4",
@@ -185,8 +185,8 @@
       ]
     },
     "C:\\Users\\theoc\\ATO\\Silo\\contracts\\Silo.sol": {
-      "lastModificationDate": 1649183507419,
-      "contentHash": "dc10c530f3656d794a5942a488803d09",
+      "lastModificationDate": 1649598378411,
+      "contentHash": "0e0ad123d7d6d4ea0121b37a6fb6bbac",
       "sourceName": "contracts/Silo.sol",
       "solcConfig": {
         "version": "0.8.4",

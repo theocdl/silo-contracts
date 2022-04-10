@@ -11,28 +11,32 @@ contract silo is ERC1155 {
 
     address dai;
 
+    struct Item
+    {
+        uint price;
+        uint supply;
+        address issuerHolder;
+    }
+
     struct Issuer
     {
         string name;
         uint UID;
         address addressIssuer;
-
-        uint supply;
-        uint price;
+        string companyInfo;
+        uint typeItem;
+        mapping(uint => Item) item;
     }
 
     uint numIssuer = 0;
     mapping(uint => Issuer) public issuer;
-
-    event CreateCertif(Issuer indexed);
-
 
     constructor(address _dai) ERC1155("https://ipfs.io/ipfs/QmUEyQ2jf5Gf4WxUApGiLbzuiWCoZxnMuGzoqhQpH2tf2x/{id}.json")
     {
         dai = _dai;
     }
 
-    function addIssuer(string memory _name) public payable
+    function addIssuer(string memory _name, string memory _companyInfo) public payable
     {
         bool verify = false;
         // to verify if the Issuer already exists
@@ -52,40 +56,33 @@ contract silo is ERC1155 {
         issuer[numIssuer].name = _name;
         issuer[numIssuer].UID = numIssuer;
         issuer[numIssuer].addressIssuer = msg.sender;
-        issuer[numIssuer].supply = 0;
-        issuer[numIssuer].price = 0;
+        issuer[numIssuer].companyInfo = _companyInfo;
 
         numIssuer++;
     }
 
-    function createCertificate(uint _UIDIssuer, uint _supply, uint _price) public
+    function create(uint _UIDIssuer, uint _typeItem, uint _price, uint _supply) public
     {
-        uint value = _supply * _price * 10 ** 18;
-
         require
         (
             issuer[_UIDIssuer].addressIssuer == msg.sender,
             "Your are not the owner of the Issuer ! You can't do this action."
         );
 
-        require
-        (
-            IERC20(dai).balanceOf(msg.sender) >= value * 3 / 2, //Verifier que l'entreprise à 1,5x la somme au cas ou si probleme de vente
-            "You don't have enough money for create certificate ! You need to have 2 time the price on your wallet"
-        );
-        issuer[_UIDIssuer].supply += _supply;
-        issuer[_UIDIssuer].price = _price;
+        issuer[_UIDIssuer].item[_typeItem].price = _price;
+        issuer[_UIDIssuer].item[_typeItem].issuerHolder = msg.sender;
+        issuer[_UIDIssuer].item[_typeItem].supply += _supply;
 
-        emit CreateCertif(issuer[_UIDIssuer]);
     }
 
-    function buyCertificate(uint _userSupply, uint _UIDIssuer) public
+//ajouter partie URI et changer ERC721
+    function buy(uint  _UIDIssuer, uint _typeItem, uint _supply) public
     {
-        uint value = _userSupply * issuer[_UIDIssuer].price * 10 ** 18;
+        uint value = _supply * issuer[_UIDIssuer].item[_typeItem].price * 10 ** 18;
 
         require
         (
-            issuer[_UIDIssuer].supply >= _userSupply,
+            issuer[_UIDIssuer].item[_typeItem].supply >= _supply,
             "You ask for too much: please check the current available supply !"
         );
 
@@ -96,39 +93,30 @@ contract silo is ERC1155 {
         );
 
         IERC20(dai).transferFrom(msg.sender, issuer[_UIDIssuer].addressIssuer, value);
-        issuer[_UIDIssuer].supply -= _userSupply;
-        _mint(msg.sender, issuer[_UIDIssuer].UID, _userSupply, "");
-        //a voir si on en fait supply ou supply *10**18
+        issuer[_UIDIssuer].item[_supply].supply -= _supply;
+        _mint(msg.sender, issuer[_UIDIssuer].UID, _supply, ""); // a modif
 
     }
 
-    function sellCertifaicateToOwnerIssuer(string memory _name) public
+    function sell(string memory _name) public
     {
         //
     }
 
     //SETTER
 
-    function changePrice(uint _UIDIssuer, uint _newPrice) public payable
+    function changePrice(uint _UIDIssuer, uint _typeItem, uint _newPrice) public payable
     {
-        uint value = issuer[_UIDIssuer].supply * _newPrice * 10 ** 18;
-
         require
         (
             issuer[_UIDIssuer].addressIssuer == msg.sender,
             "Your are not the owner of the Issuer ! You can't do this action."
         );
 
-        require
-        (
-            IERC20(dai).balanceOf(msg.sender) >= value * 3 / 2, //Verifier que l'entreprise à 1,5x la somme au cas ou si probleme de vente
-            "You don't have enough money for create certificate ! You need to have 2 time the price on your wallet"
-        );
-
-        issuer[_UIDIssuer].price = _newPrice;
+        issuer[_UIDIssuer].item[_typeItem].price = _newPrice;
     }
 
-    function changeSupply(uint _UIDIssuer, uint _newSupply) public payable
+    function changeSupply(uint _UIDIssuer, uint _typeItem, uint _newSupply) public payable
     {
         require
         (
@@ -136,7 +124,18 @@ contract silo is ERC1155 {
             "Your are not the owner of the Issuer ! You can't do this action."
         );
 
-        issuer[_UIDIssuer].supply = _newSupply;
+        issuer[_UIDIssuer].item[_typeItem].supply = _newSupply;
+    }
+
+    function changeCompagnyInfo(uint _UIDIssuer, string memory _compagnyInfo) public payable
+    {
+        require
+        (
+            issuer[_UIDIssuer].addressIssuer == msg.sender,
+            "Your are not the owner of the Issuer ! You can't do this action."
+        );
+
+        issuer[_UIDIssuer].companyInfo = _compagnyInfo;
     }
 
     //GETTER
@@ -151,14 +150,9 @@ contract silo is ERC1155 {
         return "Name not recognized";
     }
 
-    function getValue(uint _UIDIssuer, uint _userSupply) public view returns (uint)
+    function getItem(uint _UID, uint _item) public view returns(Item memory)
     {
-        uint value = _userSupply * issuer[_UIDIssuer].price;
-        return value;
+        return issuer[_UID].item[_item];
     }
 
-    function getBallance() public view returns (uint)
-    {
-        return IERC20(dai).balanceOf(msg.sender);
-    }
 }

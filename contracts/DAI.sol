@@ -21,20 +21,4 @@ contract DAI is ERC20
         _mint(msg.sender, 50 * 10 ** 18);
         emit Withdrawn(msg.sender, 50);
     }
-
-    function approveSilo(uint _value) public
-    {
-        uint value = _value * 10 ** 18;
-        approve(silo, value);
-    }
-
-    function changeSiloAddress(address _silo) public
-    {
-        require
-        (
-            msg.sender == owner,
-            "Only the owner of the contract can call this function."
-        );
-        silo = _silo;
-    }
 }
