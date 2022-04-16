@@ -21,7 +21,9 @@ npx hardhat test
 You can run the test and saw :
 - good deployed of ``DAI`` and ``Silo`` contract
 - register your compagny
-- create NFT
+- create & modify NFT
+- get DAI
+- buy cerificate
 
 Workflow
 =======================
