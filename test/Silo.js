@@ -56,29 +56,21 @@ describe("ERC1155 token", function () {
 
         it("Compagny  register can  create 10 Certificates", async function () {
             await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
-            await silo.connect(holder).create(0, 1, 100, 10);
-            let iteminfo = await silo.getItem(0, 1);
-            let supply = iteminfo.supply;
+            await silo.connect(holder).create(0, 10, 100, "siloToken.json");
+            let issuerinfo = await silo.issuer(0);
+            let supply = issuerinfo.numItem;
             await expect(supply).to.equal('10');
         });
 
         it("Holder of the compagny can change the price of the certificate", async function () {
             await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
-            await silo.connect(holder).create(0, 1, 100, 1);
-            await silo.connect(holder).changePrice(0, 1, 90);
-            let iteminfo = await silo.getItem(0, 1);
+            await silo.connect(holder).create(0, 1, 100, "siloToken.json");
+            await silo.connect(holder).changePrice(0, 90);
+            let iteminfo = await silo.getItem(0);
             let price = iteminfo.price;
             await expect(price).to.equal('90');
         });
 
-        it("Holder of the compagny can change the supply of the certificate", async function () {
-            await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
-            await silo.connect(holder).create(0, 1, 100, 1);
-            await silo.connect(holder).changeSupply(0, 1, 2);
-            let iteminfo = await silo.getItem(0, 1);
-            let supply = iteminfo.supply;
-            await expect(supply).to.equal('2');
-        });
     });
 
     describe("Get DAI", function () {
@@ -97,16 +89,16 @@ describe("ERC1155 token", function () {
             let volume = ethers.utils.parseEther('100');
 
             await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
-            await silo.connect(holder).create(0, 1, 100, 1);
+            await silo.connect(holder).create(0, 1, 100, "siloToken.json");
 
             await dai.connect(buyer).withdraw();
             await dai.connect(buyer).withdraw();
             await dai.connect(buyer).withdraw();
 
             await dai.connect(buyer).approve(silo.address, volume);
-            await silo.connect(buyer).buy(0, 1, 1);
+            await silo.connect(buyer).buy(0);
 
-            let buyerBalance = await silo.balanceOf(buyer.address, 0);
+            let buyerBalance = await silo.balanceOf(buyer.address);
             expect(buyerBalance).to.equal('1');
         });
 
@@ -114,14 +106,14 @@ describe("ERC1155 token", function () {
             let volume = ethers.utils.parseEther('100');
 
             await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
-            await silo.connect(holder).create(0, 1, 100, 1);
+            await silo.connect(holder).create(0, 1, 100, "siloToken.json");
 
             await dai.connect(buyer).withdraw();
             await dai.connect(buyer).withdraw();
             await dai.connect(buyer).withdraw();
 
             await dai.connect(buyer).approve(silo.address, volume);
-            await silo.connect(buyer).buy(0, 1, 1);
+            await silo.connect(buyer).buy(0);
 
             let buyerBalance = await dai.balanceOf(buyer.address);
             let buyerBalanceHex = buyerBalance.toString();
@@ -132,14 +124,14 @@ describe("ERC1155 token", function () {
             let volume = ethers.utils.parseEther('100');
 
             await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
-            await silo.connect(holder).create(0, 1, 100, 1);
+            await silo.connect(holder).create(0, 1, 100, "siloToken.json");
 
             await dai.connect(buyer).withdraw();
             await dai.connect(buyer).withdraw();
             await dai.connect(buyer).withdraw();
 
             await dai.connect(buyer).approve(silo.address, volume);
-            await silo.connect(buyer).buy(0, 1, 1);
+            await silo.connect(buyer).buy(0);
 
             let holderBalance = await dai.balanceOf(holder.address);
             let holderBalanceHex = holderBalance.toString();

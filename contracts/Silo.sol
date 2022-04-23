@@ -2,12 +2,17 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract silo is ERC1155 {
+
+contract silo is ERC721,ERC721URIStorage  {
+    using Counters for Counters.Counter;
+
+    Counters.Counter private _tokenIdCounter;
 
     address dai;
 
@@ -16,6 +21,7 @@ contract silo is ERC1155 {
         uint price;
         uint supply;
         address issuerHolder;
+        string URI;
     }
 
     struct Issuer
@@ -24,14 +30,14 @@ contract silo is ERC1155 {
         uint UID;
         address addressIssuer;
         string companyInfo;
-        uint typeItem;
+        uint numItem;
         mapping(uint => Item) item;
     }
 
     uint numIssuer = 0;
     mapping(uint => Issuer) public issuer;
 
-    constructor(address _dai) ERC1155("https://ipfs.io/ipfs/QmUEyQ2jf5Gf4WxUApGiLbzuiWCoZxnMuGzoqhQpH2tf2x/{id}.json")
+    constructor(address _dai) ERC721("SiloToken", "SLO")
     {
         dai = _dai;
     }
@@ -57,11 +63,12 @@ contract silo is ERC1155 {
         issuer[numIssuer].UID = numIssuer;
         issuer[numIssuer].addressIssuer = msg.sender;
         issuer[numIssuer].companyInfo = _companyInfo;
+        issuer[numIssuer].numItem = 0;
 
         numIssuer++;
     }
 
-    function create(uint _UIDIssuer, uint _typeItem, uint _price, uint _supply) public
+    function create(uint _UIDIssuer, uint _supply, uint _price, string calldata _URI) public
     {
         require
         (
@@ -69,21 +76,34 @@ contract silo is ERC1155 {
             "Your are not the owner of the Issuer ! You can't do this action."
         );
 
-        issuer[_UIDIssuer].item[_typeItem].price = _price;
-        issuer[_UIDIssuer].item[_typeItem].issuerHolder = msg.sender;
-        issuer[_UIDIssuer].item[_typeItem].supply += _supply;
+        uint numberOfItemStart = issuer[_UIDIssuer].numItem;
 
+        for( uint i = numberOfItemStart ; i < (numberOfItemStart + _supply) ; i++)
+        {
+            issuer[_UIDIssuer].item[i].price = _price;
+            issuer[_UIDIssuer].item[i].issuerHolder = msg.sender;
+            issuer[_UIDIssuer].item[i].supply = 1;
+            issuer[_UIDIssuer].item[i].URI = _URI;
+        }
+        issuer[_UIDIssuer].numItem += _supply;
     }
 
-//ajouter partie URI et changer ERC721
-    function buy(uint  _UIDIssuer, uint _typeItem, uint _supply) public
+    //ajouter partie URI
+    function buy(uint  _UIDIssuer) public payable
     {
-        uint value = _supply * issuer[_UIDIssuer].item[_typeItem].price * 10 ** 18;
+        require
+        (
+            issuer[_UIDIssuer].numItem -1 >= 0,
+            "No more item for this compagny"
+        );
+
+        uint numItem = issuer[_UIDIssuer].numItem -1;
+        uint value = issuer[_UIDIssuer].item[numItem].price * 10 ** 18;
 
         require
         (
-            issuer[_UIDIssuer].item[_typeItem].supply >= _supply,
-            "You ask for too much: please check the current available supply !"
+            issuer[_UIDIssuer].numItem > 0,
+            "There is no more certificate for this compagny"
         );
 
         require
@@ -92,9 +112,16 @@ contract silo is ERC1155 {
             "You don't have enough money !"
         );
 
+
+        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
+
         IERC20(dai).transferFrom(msg.sender, issuer[_UIDIssuer].addressIssuer, value);
-        issuer[_UIDIssuer].item[_supply].supply -= _supply;
-        _mint(msg.sender, issuer[_UIDIssuer].UID, _supply, ""); // a modif
+
+        issuer[_UIDIssuer].numItem -= 1;
+        _safeMint(msg.sender, tokenId);
+        _setTokenURI(tokenId, issuer[_UIDIssuer].item[numItem].URI);
+        //delete issuer[_UIDIssuer].item[numItem];
 
     }
 
@@ -105,7 +132,7 @@ contract silo is ERC1155 {
 
     //SETTER
 
-    function changePrice(uint _UIDIssuer, uint _typeItem, uint _newPrice) public payable
+    function changePrice(uint _UIDIssuer, uint _newPrice) public payable
     {
         require
         (
@@ -113,19 +140,12 @@ contract silo is ERC1155 {
             "Your are not the owner of the Issuer ! You can't do this action."
         );
 
-        issuer[_UIDIssuer].item[_typeItem].price = _newPrice;
+        for (uint i = 0 ; i < issuer[_UIDIssuer].numItem ; i++)
+        {
+            issuer[_UIDIssuer].item[i].price = _newPrice;
+        }
     }
 
-    function changeSupply(uint _UIDIssuer, uint _typeItem, uint _newSupply) public payable
-    {
-        require
-        (
-            issuer[_UIDIssuer].addressIssuer == msg.sender,
-            "Your are not the owner of the Issuer ! You can't do this action."
-        );
-
-        issuer[_UIDIssuer].item[_typeItem].supply = _newSupply;
-    }
 
     function changeCompagnyInfo(uint _UIDIssuer, string memory _compagnyInfo) public payable
     {
@@ -150,9 +170,22 @@ contract silo is ERC1155 {
         return "Name not recognized";
     }
 
-    function getItem(uint _UID, uint _item) public view returns(Item memory)
-    {
-        return issuer[_UID].item[_item];
+
+    function _burn(uint tokenId) internal override(ERC721, ERC721URIStorage) {
+        super._burn(tokenId);
     }
 
+    function tokenURI(uint tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
+    {
+        return super.tokenURI(tokenId);
+    }
+
+    //For Hardhat
+
+    function getItem(uint _UIDIssuer) public view returns(Item memory)
+    {
+        uint numItem = issuer[_UIDIssuer].numItem - 1;
+
+        return issuer[_UIDIssuer].item[numItem];
+    }
 }
