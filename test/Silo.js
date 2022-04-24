@@ -138,4 +138,48 @@ describe("ERC1155 token", function () {
             expect(holderBalanceHex).to.equal('100000000000000000000');
         });
     });
+
+    describe("Sell certificate", function (){
+
+        it("Buyer can sell his NFT", async function(){
+            let volume = ethers.utils.parseEther('100');
+
+            await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
+            await silo.connect(holder).create(0, 1, 100, "siloToken.json");
+
+            await dai.connect(buyer).withdraw();
+            await dai.connect(buyer).withdraw();
+            await dai.connect(buyer).withdraw();
+
+            await dai.connect(buyer).approve(silo.address, volume);
+            await silo.connect(buyer).buy(0);
+
+            await silo.connect(buyer).approve(holder.address,0);
+            await silo.connect(buyer).sell(0, "Strat", "newURI.json");
+
+            let buyerBalance = await silo.balanceOf(buyer.address);
+            expect(buyerBalance).to.equal('0');
+        });
+
+        it("Holder receive the NFT of the buyer", async function(){
+            let volume = ethers.utils.parseEther('100');
+
+            await silo.connect(holder).addIssuer("Strat", "https://strat.cc");
+            await silo.connect(holder).create(0, 1, 100, "siloToken.json");
+
+            await dai.connect(buyer).withdraw();
+            await dai.connect(buyer).withdraw();
+            await dai.connect(buyer).withdraw();
+
+            await dai.connect(buyer).approve(silo.address, volume);
+            await silo.connect(buyer).buy(0);
+
+            await silo.connect(buyer).approve(holder.address,0);
+            await silo.connect(buyer).sell(0, "Strat", "newURI.json");
+
+            let buyerBalance = await silo.balanceOf(holder.address);
+            expect(buyerBalance).to.equal('1');
+        });
+
+    });
 });
