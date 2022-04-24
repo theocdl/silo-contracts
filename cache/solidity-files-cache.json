@@ -185,8 +185,8 @@
       ]
     },
     "C:\\Users\\theoc\\ATO\\Silo\\contracts\\Silo.sol": {
-      "lastModificationDate": 1650720458298,
-      "contentHash": "1a050da19ca2727dc6a4bd00f6207e57",
+      "lastModificationDate": 1650811213449,
+      "contentHash": "ccc3d719948ab84b53523dde1c7ea665",
       "sourceName": "contracts/Silo.sol",
       "solcConfig": {
         "version": "0.8.4",

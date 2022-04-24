@@ -37,6 +37,11 @@ contract silo is ERC721,ERC721URIStorage  {
     uint numIssuer = 0;
     mapping(uint => Issuer) public issuer;
 
+    event NewIssuer(string _name, uint _UID, address _addressIssuer, string _companyInfo);
+    event Buy(address indexed _buyer, address indexed _holder, uint _tokenId, uint _price);
+    event Sell(address indexed _from, address indexed _to, uint _tokenId, string _newURI);
+    event Burn(address indexed _from, uint _tokenId);
+
     constructor(address _dai) ERC721("SiloToken", "SLO")
     {
         dai = _dai;
@@ -66,6 +71,8 @@ contract silo is ERC721,ERC721URIStorage  {
         issuer[numIssuer].numItem = 0;
 
         numIssuer++;
+
+        emit NewIssuer( issuer[numIssuer].name, issuer[numIssuer].UID, issuer[numIssuer].addressIssuer, issuer[numIssuer].companyInfo);
     }
 
     function create(uint _UIDIssuer, uint _supply, uint _price, string calldata _URI) public
@@ -121,13 +128,31 @@ contract silo is ERC721,ERC721URIStorage  {
         issuer[_UIDIssuer].numItem -= 1;
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, issuer[_UIDIssuer].item[numItem].URI);
-        //delete issuer[_UIDIssuer].item[numItem];
 
+        emit Buy(msg.sender, issuer[_UIDIssuer].addressIssuer, tokenId, value);
     }
 
-    function sell(string memory _name) public
+    function sell(uint tokenId, string calldata _nameIssuer,string memory _newURI) public
     {
-        //
+        require
+        (
+            balanceOf(msg.sender) > 0,
+            "You don't have any NFT to tranfere to the Issuer"
+        );
+
+        uint issuerId = st2num(getUidIssuer(_nameIssuer));
+        _setTokenURI(tokenId, _newURI);
+        safeTransferFrom(msg.sender, issuer[issuerId].addressIssuer, tokenId);
+
+        emit Sell(msg.sender, issuer[issuerId].addressIssuer, tokenId, _newURI);
+    }
+
+    function endOrder(uint tokenId) public
+    {
+
+        _burn(tokenId);
+
+        emit Burn(msg.sender, tokenId);
     }
 
     //SETTER
@@ -160,7 +185,7 @@ contract silo is ERC721,ERC721URIStorage  {
 
     //GETTER
 
-    function getUidIssuer(string calldata _name) public view returns (string memory)
+    function getUidIssuer(string calldata _name) internal view returns (string memory)
     {
         for (uint i = 0; i < numIssuer; i++) {
             if (keccak256(abi.encodePacked(issuer[i].name)) == keccak256(abi.encodePacked(_name))) {
@@ -169,7 +194,6 @@ contract silo is ERC721,ERC721URIStorage  {
         }
         return "Name not recognized";
     }
-
 
     function _burn(uint tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
@@ -180,7 +204,24 @@ contract silo is ERC721,ERC721URIStorage  {
         return super.tokenURI(tokenId);
     }
 
-    //For Hardhat
+
+    function st2num(string memory numString) internal pure returns(uint) {
+        uint  val=0;
+        bytes   memory stringBytes = bytes(numString);
+        for (uint  i =  0; i<stringBytes.length; i++) {
+            uint exp = stringBytes.length - i;
+            bytes1 ival = stringBytes[i];
+            uint8 uval = uint8(ival);
+            uint jval = uval - uint(0x30);
+
+            val +=  (uint(jval) * (10**(exp-1)));
+        }
+        return val;
+    }
+
+
+    //FOR HARDHAT TEST
+
 
     function getItem(uint _UIDIssuer) public view returns(Item memory)
     {
@@ -189,3 +230,4 @@ contract silo is ERC721,ERC721URIStorage  {
         return issuer[_UIDIssuer].item[numItem];
     }
 }
+
