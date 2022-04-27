@@ -26,7 +26,7 @@ You should see this:
 
 ## Workflow 📜
 
-\***\*Solidity :\*\***
+### Solidity :
 
 - ✅ Add a company
 - ✅ Make NFT
