@@ -516,8 +516,8 @@
       ]
     },
     "/Users/ju/Silo/contracts/Silo.sol": {
-      "lastModificationDate": 1651063040289,
-      "contentHash": "899c0c75c6e3ab0b06de592023bb6183",
+      "lastModificationDate": 1651066634492,
+      "contentHash": "a0c8f57385dd9a7697c98b91260bf849",
       "sourceName": "contracts/Silo.sol",
       "solcConfig": {
         "version": "0.8.10",
@@ -553,7 +553,7 @@
         "^0.8.0"
       ],
       "artifacts": [
-        "silo"
+        "Silo"
       ]
     },
     "/Users/ju/Silo/node_modules/@openzeppelin/contracts/utils/Counters.sol": {

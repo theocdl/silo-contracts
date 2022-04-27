@@ -6,7 +6,7 @@ describe("Silo", function () {
 
     //CONTRACT
     let DAI;
-    let SILO;
+    let Silo;
 
     //CONTRACT DEPLOYER
     let dai;
@@ -25,8 +25,8 @@ describe("Silo", function () {
         dai = await DAI.connect(owner).deploy();
         await dai.deployed();
 
-        SILO = await ethers.getContractFactory("silo");
-        silo = await SILO.connect(owner).deploy(dai.address);
+        Silo = await ethers.getContractFactory("Silo");
+        silo = await Silo.connect(owner).deploy(dai.address);
         await dai.deployed();
     });
 
