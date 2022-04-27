@@ -1,4 +1,4 @@
-#Silo 🌽
+# Silo 🌽
 
 ## Install 💻
 
