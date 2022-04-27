@@ -516,8 +516,8 @@
       ]
     },
     "/Users/ju/Silo/contracts/Silo.sol": {
-      "lastModificationDate": 1650981517010,
-      "contentHash": "98ab9122c661a253abfa81fb3c84516b",
+      "lastModificationDate": 1651063040289,
+      "contentHash": "899c0c75c6e3ab0b06de592023bb6183",
       "sourceName": "contracts/Silo.sol",
       "solcConfig": {
         "version": "0.8.4",

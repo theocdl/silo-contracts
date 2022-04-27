@@ -7,86 +7,110 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract silo is ERC721,ERC721URIStorage  {
+contract silo is ERC721, ERC721URIStorage {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
 
     address dai;
 
-    struct Item
-    {
-        uint price;
-        uint supply;
-        address issuerHolder;
+    struct Item {
+        uint256 price;
+        uint256 supply;
+        address issuerAddress;
         string URI;
     }
 
-    struct Issuer
-    {
+    struct Issuer {
         string name;
-        uint UID;
-        address addressIssuer;
+        uint256 UID;
+        address issuerAddress;
         string companyInfo;
-        uint numItem;
-        mapping(uint => Item) item;
+        uint256 numItem;
+        mapping(uint256 => Item) item;
     }
 
-    uint numIssuer = 0;
-    mapping(uint => Issuer) public issuer;
+    uint256 numIssuer = 0;
+    mapping(uint256 => Issuer) public issuer;
 
-    event NewIssuer(string _name, uint _UID, address _addressIssuer, string _companyInfo);
-    event Buy(address indexed _buyer, address indexed _holder, uint _tokenId, uint _price);
-    event Sell(address indexed _from, address indexed _to, uint _tokenId, string _newURI);
-    event Burn(address indexed _from, uint _tokenId);
+    event NewIssuer(
+        string _name,
+        uint256 _UID,
+        address _issuerAddress,
+        string _companyInfo
+    );
+    event Buy(
+        address indexed _buyer,
+        address indexed _holder,
+        uint256 _tokenId,
+        uint256 _price
+    );
+    event Sell(
+        address indexed _from,
+        address indexed _to,
+        uint256 _tokenId,
+        string _newURI
+    );
+    event Burn(address indexed _from, uint256 _tokenId);
 
-    constructor(address _dai) ERC721("SiloToken", "SLO")
-    {
+    constructor(address _dai) ERC721("Silo", "SILO") {
         dai = _dai;
     }
 
-    function addIssuer(string memory _name, string memory _companyInfo) public payable
+    function addIssuer(string memory _name, string memory _companyInfo)
+        public
+        payable
     {
         bool verify = false;
         // to verify if the Issuer already exists
 
-        for (uint i = 0; i < numIssuer; i++) {
-
-            if (keccak256(abi.encodePacked(issuer[i].name)) == keccak256(abi.encodePacked(_name))) {
+        for (uint256 i = 0; i < numIssuer; i++) {
+            if (
+                keccak256(abi.encodePacked(issuer[i].name)) ==
+                keccak256(abi.encodePacked(_name))
+            ) {
                 verify = true;
             }
         }
 
-        require(
-            verify == false,
-            "Your Issuer has already been created !"
-        );
-        //verifier coord entreprise//
+        require(verify == false, "ISSUER_ALREADY_CREATED");
+
         issuer[numIssuer].name = _name;
         issuer[numIssuer].UID = numIssuer;
-        issuer[numIssuer].addressIssuer = msg.sender;
+        issuer[numIssuer].issuerAddress = msg.sender;
         issuer[numIssuer].companyInfo = _companyInfo;
         issuer[numIssuer].numItem = 0;
 
         numIssuer++;
 
-        emit NewIssuer( issuer[numIssuer].name, issuer[numIssuer].UID, issuer[numIssuer].addressIssuer, issuer[numIssuer].companyInfo);
+        emit NewIssuer(
+            issuer[numIssuer].name,
+            issuer[numIssuer].UID,
+            issuer[numIssuer].issuerAddress,
+            issuer[numIssuer].companyInfo
+        );
     }
 
-    function create(uint _UIDIssuer, uint _supply, uint _price, string calldata _URI) public
-    {
-        require
-        (
-            issuer[_UIDIssuer].addressIssuer == msg.sender,
-            "Your are not the owner of the Issuer ! You can't do this action."
+    function create(
+        uint256 _UIDIssuer,
+        uint256 _supply,
+        uint256 _price,
+        string calldata _URI
+    ) public {
+        require(
+            issuer[_UIDIssuer].issuerAddress == msg.sender,
+            "CALLER_MUST_BE_REGISTERED_ISSUER"
         );
 
-        uint numberOfItemStart = issuer[_UIDIssuer].numItem;
+        uint256 numberOfItemStart = issuer[_UIDIssuer].numItem;
 
-        for( uint i = numberOfItemStart ; i < (numberOfItemStart + _supply) ; i++)
-        {
+        for (
+            uint256 i = numberOfItemStart;
+            i < (numberOfItemStart + _supply);
+            i++
+        ) {
             issuer[_UIDIssuer].item[i].price = _price;
-            issuer[_UIDIssuer].item[i].issuerHolder = msg.sender;
+            issuer[_UIDIssuer].item[i].issuerAddress = msg.sender;
             issuer[_UIDIssuer].item[i].supply = 1;
             issuer[_UIDIssuer].item[i].URI = _URI;
         }
@@ -94,60 +118,50 @@ contract silo is ERC721,ERC721URIStorage  {
     }
 
     //ajouter partie URI
-    function buy(uint  _UIDIssuer) public payable
-    {
-        require
-        (
-            issuer[_UIDIssuer].numItem -1 >= 0,
-            "No more item for this compagny"
-        );
+    function buy(uint256 _UIDIssuer) public payable {
+        require(issuer[_UIDIssuer].numItem - 1 >= 0, "NFT_SOLD_OUT");
 
-        uint numItem = issuer[_UIDIssuer].numItem -1;
-        uint value = issuer[_UIDIssuer].item[numItem].price * 10 ** 18;
+        uint256 numItem = issuer[_UIDIssuer].numItem - 1;
+        uint256 value = issuer[_UIDIssuer].item[numItem].price * 10**18;
 
-        require
-        (
-            issuer[_UIDIssuer].numItem > 0,
-            "There is no more certificate for this compagny"
-        );
+        require(issuer[_UIDIssuer].numItem > 0, "NO_NFT_FOR_SALE");
 
-        require
-        (
+        require(
             IERC20(dai).balanceOf(msg.sender) >= value,
-            "You don't have enough money !"
+            "INSUFFICIENT_FUNDS"
         );
-
 
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
 
-        IERC20(dai).transferFrom(msg.sender, issuer[_UIDIssuer].addressIssuer, value);
+        IERC20(dai).transferFrom(
+            msg.sender,
+            issuer[_UIDIssuer].issuerAddress,
+            value
+        );
 
         issuer[_UIDIssuer].numItem -= 1;
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, issuer[_UIDIssuer].item[numItem].URI);
 
-        emit Buy(msg.sender, issuer[_UIDIssuer].addressIssuer, tokenId, value);
+        emit Buy(msg.sender, issuer[_UIDIssuer].issuerAddress, tokenId, value);
     }
 
-    function sell(uint tokenId, string calldata _nameIssuer,string memory _newURI) public
-    {
-        require
-        (
-            balanceOf(msg.sender) > 0,
-            "You don't have any NFT to tranfere to the Issuer"
-        );
+    function sell(
+        uint256 tokenId,
+        string calldata _nameIssuer,
+        string memory _newURI
+    ) public {
+        require(balanceOf(msg.sender) > 0, "CALLER_MUST_HOLD_THE_NFT");
 
-        uint issuerId = st2num(getUidIssuer(_nameIssuer));
+        uint256 issuerId = st2num(getIssuerId(_nameIssuer));
         _setTokenURI(tokenId, _newURI);
-        safeTransferFrom(msg.sender, issuer[issuerId].addressIssuer, tokenId);
+        safeTransferFrom(msg.sender, issuer[issuerId].issuerAddress, tokenId);
 
-        emit Sell(msg.sender, issuer[issuerId].addressIssuer, tokenId, _newURI);
+        emit Sell(msg.sender, issuer[issuerId].issuerAddress, tokenId, _newURI);
     }
 
-    function endOrder(uint tokenId) public
-    {
-
+    function redeem(uint256 tokenId) public {
         _burn(tokenId);
 
         emit Burn(msg.sender, tokenId);
@@ -155,27 +169,24 @@ contract silo is ERC721,ERC721URIStorage  {
 
     //SETTER
 
-    function changePrice(uint _UIDIssuer, uint _newPrice) public payable
-    {
-        require
-        (
-            issuer[_UIDIssuer].addressIssuer == msg.sender,
-            "Your are not the owner of the Issuer ! You can't do this action."
+    function changePrice(uint256 _UIDIssuer, uint256 _newPrice) public payable {
+        require(
+            issuer[_UIDIssuer].issuerAddress == msg.sender,
+            "CALLER_CANNOT_CHANGE_PRICE"
         );
 
-        for (uint i = 0 ; i < issuer[_UIDIssuer].numItem ; i++)
-        {
+        for (uint256 i = 0; i < issuer[_UIDIssuer].numItem; i++) {
             issuer[_UIDIssuer].item[i].price = _newPrice;
         }
     }
 
-
-    function changeCompagnyInfo(uint _UIDIssuer, string memory _compagnyInfo) public payable
+    function changeCompanyInfo(uint256 _UIDIssuer, string memory _compagnyInfo)
+        public
+        payable
     {
-        require
-        (
-            issuer[_UIDIssuer].addressIssuer == msg.sender,
-            "Your are not the owner of the Issuer ! You can't do this action."
+        require(
+            issuer[_UIDIssuer].issuerAddress == msg.sender,
+            "CALLER_DOES_NOT_MATCH_COMPANY"
         );
 
         issuer[_UIDIssuer].companyInfo = _compagnyInfo;
@@ -183,49 +194,57 @@ contract silo is ERC721,ERC721URIStorage  {
 
     //GETTER
 
-    function getUidIssuer(string calldata _name) internal view returns (string memory)
+    function getIssuerId(string calldata _name)
+        internal
+        view
+        returns (string memory)
     {
-        for (uint i = 0; i < numIssuer; i++) {
-            if (keccak256(abi.encodePacked(issuer[i].name)) == keccak256(abi.encodePacked(_name))) {
+        for (uint256 i = 0; i < numIssuer; i++) {
+            if (
+                keccak256(abi.encodePacked(issuer[i].name)) ==
+                keccak256(abi.encodePacked(_name))
+            ) {
                 return Strings.toString(issuer[i].UID);
             }
         }
-        return "Name not recognized";
+        return "WRONG_COMPANY_NAME";
     }
 
-    function _burn(uint tokenId) internal override(ERC721, ERC721URIStorage) {
+    function _burn(uint256 tokenId)
+        internal
+        override(ERC721, ERC721URIStorage)
+    {
         super._burn(tokenId);
     }
 
-    function tokenURI(uint tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
     {
         return super.tokenURI(tokenId);
     }
 
-
-    function st2num(string memory numString) internal pure returns(uint) {
-        uint  val=0;
-        bytes   memory stringBytes = bytes(numString);
-        for (uint  i =  0; i<stringBytes.length; i++) {
-            uint exp = stringBytes.length - i;
+    function st2num(string memory numString) internal pure returns (uint256) {
+        uint256 val = 0;
+        bytes memory stringBytes = bytes(numString);
+        for (uint256 i = 0; i < stringBytes.length; i++) {
+            uint256 exp = stringBytes.length - i;
             bytes1 ival = stringBytes[i];
             uint8 uval = uint8(ival);
-            uint jval = uval - uint(0x30);
+            uint256 jval = uval - uint256(0x30);
 
-            val +=  (uint(jval) * (10**(exp-1)));
+            val += (uint256(jval) * (10**(exp - 1)));
         }
         return val;
     }
 
-
     //FOR HARDHAT TEST
 
-
-    function getItem(uint _UIDIssuer) public view returns(Item memory)
-    {
-        uint numItem = issuer[_UIDIssuer].numItem - 1;
+    function getItem(uint256 _UIDIssuer) public view returns (Item memory) {
+        uint256 numItem = issuer[_UIDIssuer].numItem - 1;
 
         return issuer[_UIDIssuer].item[numItem];
     }
 }
-
