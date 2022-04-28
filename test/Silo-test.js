@@ -121,6 +121,7 @@ describe("Silo", function () {
             expect(buyerBalanceHex).to.equal('50000000000000000000');
         });
 
+
         it("Should receive the money", async function () {
             let volume = ethers.utils.parseEther('100');
 
