@@ -3,7 +3,7 @@
 ## Install 💻
 
 ```shell
-git clone https://github.com/theocdl/silo.git
+git clone https://github.com/theocdl/silo-contracts.git
 cd silo
 npm install
 ```
