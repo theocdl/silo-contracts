@@ -1,5 +1,5 @@
 // npx hardhat run --network goerli scripts/deploy.js
-
+require("@nomiclabs/hardhat-etherscan");
 const hre = require("hardhat");
 
 async function main() {
@@ -10,10 +10,15 @@ async function main() {
     console.log("Deployed to:", dai.address);
 
     const Silo = await hre.ethers.getContractFactory("Silo");
-    const silo = await Silo.deploy();
+    const silo = await Silo.deploy(dai.address);
     await silo.deployed();
+    console.log("✅ Deploy pending");
+    await silo.deployTransaction.wait( 5 );
     console.log("Deployed to:", silo.address);
     // TODO: wait 5 confirmations
+
+     daiAD = dai.address;
+     siloAD = silo.address;
 
     // https://docs.ethers.io/v5/api/providers/types/#providers-TransactionResponse
 
@@ -24,7 +29,10 @@ async function main() {
     // Try waiting for a minute before verifying your contract. If you are invoking this from a script,
     // try to wait for five confirmations of your contract deployment transaction before running the verification subtask.
 
-    await hre.run("verify", {network: "goerli", address: silo.address});
+    console.log("✅ Verify pending");
+    await hre.run("verify:verify", {network: "goerli", address: siloAD , constructorArguments: [daiAD,],});
+    console.log("✅ Verified");
+
 }
 
 main()

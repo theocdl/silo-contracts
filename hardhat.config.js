@@ -1,5 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
-//require("@nomiclabs/hardhat-etherscan");
+require("@nomiclabs/hardhat-etherscan");
 require('dotenv').config();
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -22,13 +22,13 @@ module.exports = {
   solidity: "0.8.10",
   networks: {
     goerli: {
-      url: `https://goerli.infura.io/v3/afe72870dec247ffb9e077887753e131q`,
+      url: `https://goerli.infura.io/v3/96f3ef730c8b428e855eab9d0357a7e7`,
       accounts: [process.env.GOERLI_ACCOUNT_PRIVATE_KEY]
     }
   },
   etherscan: {
     apiKey: {
-      rinkeby: process.env.ETHERSCAN_API_KEY
+      goerli: process.env.ETHERSCAN_API_KEY
     }
   }
 };
